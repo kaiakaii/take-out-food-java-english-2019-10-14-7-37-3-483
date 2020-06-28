@@ -1,3 +1,4 @@
+import java.util.HashMap;
 import java.util.List;
 
 /*
@@ -14,7 +15,77 @@ public class App {
 
     public String bestCharge(List<String> inputs) {
         //TODO: write code here
-
-        return null;
+        if (null == inputs) {
+            return null;
+        }
+        List<Item> itemRepositoryAll = itemRepository.findAll();
+        List<SalesPromotion> salesPromotions = salesPromotionRepository.findAll();
+        HashMap<String, Integer> items = new HashMap(16);
+        //定义两种折扣方案结果
+        int  Promotion1_total = 0;
+        int Promotion2_total= 0;
+        //两种方案的输出
+        String Pro1Msg = "============= Order details =============\n";
+        String Pro2Msg = "============= Order details =============\n";
+        int discount = 0;
+        //将Item提取名称和数量
+        for (String item :
+                inputs) {
+            String[] cur  = item.split(" x ");
+            items.put(cur[0],Integer.valueOf(cur[1]));
+        }
+        //遍历key与库对比得出相应价格
+        String resultItem = "";
+        for (String key :
+                items.keySet()) {
+            System.out.println("key + "+key+"  "+items.get(key));
+            for (Item repo :
+                    itemRepositoryAll) {
+                if (repo.getId().equals(key)){
+                    System.out.println("yes");
+                    resultItem += repo.getName()+",";
+                    SalesPromotion salesPromotion = salesPromotions.get(1);
+                    List<String> relatedItems = salesPromotion.getRelatedItems();
+                    //包含特价菜单
+                    if (relatedItems.contains(key)){
+                        //计算对应价格
+                        int pro2 = (int) (repo.getPrice()*items.get(key))/2;
+                        Promotion1_total += pro2*2;
+                        Promotion2_total += pro2;
+                        Pro1Msg += repo.getName()+" x "+items.get(key)+" = " +Promotion1_total+" yuan \n";
+                        Pro2Msg += repo.getName()+" x "+items.get(key)+" = " +Promotion2_total+" yuan \n";
+                        discount += pro2;
+                    }else{
+                        int pro1 = (int) (repo.getPrice()*items.get(key));
+                        Promotion1_total += pro1;
+                        Promotion2_total += pro1;
+                        Pro1Msg += repo.getName()+" x "+items.get(key)+" = " +Promotion1_total+" yuan \n";
+                        Pro2Msg += repo.getName()+" x "+items.get(key)+" = " +Promotion2_total+" yuan \n";
+                    }
+                }
+            }
+        }
+        Pro1Msg +=  "-----------------------------------\n" ;
+        Pro2Msg +=  "-----------------------------------\n" ;
+        if (Promotion1_total > 30){
+            Promotion1_total -= 6;
+        }else{
+            Pro1Msg += "In total:"+Promotion1_total+" yuan\n";
+            Pro1Msg += "===================================";
+            return Pro1Msg;
+        }
+        if (Promotion1_total <Promotion2_total){
+            Pro1Msg +=  "Promotion used:\n" +salesPromotions.get(0).getDisplayName()+",saving 6 yuan\n" ;
+            Pro1Msg +=  "-----------------------------------\n";
+            Pro1Msg += "Total: "+Promotion1_total+" yuan\n";
+            Pro1Msg += "===================================";
+            return  Pro1Msg;
+        }else{
+            Pro2Msg +=  "Promotion used:\n" +salesPromotions.get(1).getDisplayName()+"("+resultItem.substring(0,resultItem.length()-1)+"),saving "+discount+" yuan\n" ;
+            Pro2Msg +=  "-----------------------------------\n";
+            Pro2Msg += "Total: "+Promotion2_total+" yuan\n";
+            Pro2Msg += "===================================";
+            return Pro2Msg;
+        }
     }
 }
